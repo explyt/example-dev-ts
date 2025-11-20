@@ -31,6 +31,22 @@ export class SyncService {
   ) {
     const base = await Base.getWithInfo(context, param.baseId);
 
+    // Validate Airtable credentials based on API version
+    if (param.syncPayload.type === 'Airtable' && param.syncPayload.details) {
+      const details = param.syncPayload.details as any;
+      const apiVersion = details.apiVersion || 'v1';
+
+      if (apiVersion === 'v1' && !details.apiKey) {
+        NcError.badRequest('API Key is required for Airtable API v1');
+      }
+
+      if (apiVersion === 'v2' && !details.personalAccessToken) {
+        NcError.badRequest(
+          'Personal Access Token is required for Airtable API v2',
+        );
+      }
+    }
+
     const sync = await SyncSource.insert(context, {
       ...param.syncPayload,
       fk_user_id: param.userId,
@@ -79,6 +95,22 @@ export class SyncService {
 
     if (!syncSource) {
       NcError.badRequest('Sync source not found');
+    }
+
+    // Validate Airtable credentials based on API version
+    if (param.syncPayload.type === 'Airtable' && param.syncPayload.details) {
+      const details = param.syncPayload.details as any;
+      const apiVersion = details.apiVersion || 'v1';
+
+      if (apiVersion === 'v1' && !details.apiKey) {
+        NcError.badRequest('API Key is required for Airtable API v1');
+      }
+
+      if (apiVersion === 'v2' && !details.personalAccessToken) {
+        NcError.badRequest(
+          'Personal Access Token is required for Airtable API v2',
+        );
+      }
     }
 
     const res = await SyncSource.update(
