@@ -1,0 +1,2186 @@
+openapi: 3.0.3
+info:
+  title: NocoDB API
+  description: |
+    NocoDB REST API спецификация.
+    NocoDB - это open-source Airtable альтернатива, которая превращает любую базу данных в умную электронную таблицу.
+  version: 2.0.0
+  contact:
+    name: NocoDB
+    url: https://nocodb.com
+  license:
+    name: AGPL-3.0
+    url: https://github.com/nocodb/nocodb/blob/master/LICENSE
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер разработки
+  - url: https://api.nocodb.com
+    description: Production сервер
+
+tags:
+  - name: Auth
+    description: Аутентификация и авторизация
+  - name: Bases
+    description: Управление базами данных (проектами)
+  - name: Tables
+    description: Управление таблицами
+  - name: Columns
+    description: Управление колонками таблиц
+  - name: Data
+    description: Операции с данными
+  - name: Views
+    description: Управление представлениями (views)
+  - name: Filters
+    description: Управление фильтрами
+  - name: Sorts
+    description: Управление сортировками
+  - name: Hooks
+    description: Управление веб-хуками
+  - name: Users
+    description: Управление пользователями
+  - name: Base Users
+    description: Управление пользователями базы
+  - name: Sources
+    description: Управление источниками данных
+  - name: Forms
+    description: Управление формами
+  - name: Grids
+    description: Управление grid представлениями
+  - name: Galleries
+    description: Управление gallery представлениями
+  - name: Kanbans
+    description: Управление kanban представлениями
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiToken:
+      type: apiKey
+      in: header
+      name: xc-token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        msg:
+          type: string
+        error:
+          type: string
+
+    PagedResponse:
+      type: object
+      properties:
+        list:
+          type: array
+          items: {}
+        pageInfo:
+          type: object
+          properties:
+            totalRows:
+              type: integer
+            page:
+              type: integer
+            pageSize:
+              type: integer
+            isFirstPage:
+              type: boolean
+            isLastPage:
+              type: boolean
+
+    Base:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        prefix:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        meta:
+          type: object
+        color:
+          type: string
+        deleted:
+          type: boolean
+        order:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BaseInfo:
+      type: object
+      properties:
+        Node:
+          type: string
+        Arch:
+          type: string
+        Platform:
+          type: string
+        Docker:
+          type: boolean
+        RootDB:
+          type: string
+        PackageVersion:
+          type: string
+
+    Table:
+      type: object
+      properties:
+        id:
+          type: string
+        base_id:
+          type: string
+        source_id:
+          type: string
+        table_name:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [table, view]
+        enabled:
+          type: boolean
+        meta:
+          type: object
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Column'
+
+    Column:
+      type: object
+      properties:
+        id:
+          type: string
+        base_id:
+          type: string
+        fk_model_id:
+          type: string
+        title:
+          type: string
+        column_name:
+          type: string
+        uidt:
+          type: string
+        dt:
+          type: string
+        np:
+          type: string
+        ns:
+          type: string
+        clen:
+          type: string
+        cop:
+          type: string
+        pk:
+          type: boolean
+        pv:
+          type: boolean
+        rqd:
+          type: boolean
+        un:
+          type: boolean
+        ct:
+          type: string
+        ai:
+          type: boolean
+        unique:
+          type: boolean
+        cdf:
+          type: string
+        cc:
+          type: string
+        csn:
+          type: string
+        dtx:
+          type: string
+        dtxp:
+          type: string
+        dtxs:
+          type: string
+        au:
+          type: boolean
+        validate:
+          type: object
+        meta:
+          type: object
+        system:
+          type: boolean
+        order:
+          type: number
+
+    View:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [grid, form, gallery, kanban, calendar, map]
+        is_default:
+          type: boolean
+        show_system_fields:
+          type: boolean
+        lock_type:
+          type: string
+        uuid:
+          type: string
+        password:
+          type: string
+        show:
+          type: boolean
+        order:
+          type: number
+        meta:
+          type: object
+
+    Filter:
+      type: object
+      properties:
+        id:
+          type: string
+        fk_view_id:
+          type: string
+        fk_hook_id:
+          type: string
+        fk_column_id:
+          type: string
+        logical_op:
+          type: string
+          enum: [and, or]
+        comparison_op:
+          type: string
+        value:
+          type: string
+        fk_parent_id:
+          type: string
+        is_group:
+          type: boolean
+
+    Sort:
+      type: object
+      properties:
+        id:
+          type: string
+        fk_view_id:
+          type: string
+        fk_column_id:
+          type: string
+        direction:
+          type: string
+          enum: [asc, desc]
+        order:
+          type: number
+
+    Hook:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        env:
+          type: string
+        type:
+          type: string
+        event:
+          type: string
+        operation:
+          type: string
+        async:
+          type: boolean
+        payload:
+          type: object
+        url:
+          type: string
+        headers:
+          type: array
+          items:
+            type: object
+        condition:
+          type: boolean
+        notification:
+          type: object
+        retries:
+          type: integer
+        retry_interval:
+          type: integer
+        timeout:
+          type: integer
+        active:
+          type: boolean
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        firstname:
+          type: string
+        lastname:
+          type: string
+        roles:
+          type: string
+        invite_token:
+          type: string
+        invite_token_expires:
+          type: string
+          format: date-time
+
+    Source:
+      type: object
+      properties:
+        id:
+          type: string
+        base_id:
+          type: string
+        alias:
+          type: string
+        type:
+          type: string
+        is_meta:
+          type: boolean
+        is_local:
+          type: boolean
+        is_schema_readonly:
+          type: boolean
+        is_data_readonly:
+          type: boolean
+        config:
+          type: object
+        inflection_column:
+          type: string
+        inflection_table:
+          type: string
+        order:
+          type: number
+        enabled:
+          type: boolean
+
+security:
+  - bearerAuth: []
+  - apiToken: []
+
+paths:
+  # ==================== AUTH ====================
+  /api/v2/auth/user/signup:
+    post:
+      tags:
+        - Auth
+      summary: Регистрация нового пользователя
+      operationId: signup
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Неверные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v2/auth/user/signin:
+    post:
+      tags:
+        - Auth
+      summary: Вход в систему
+      operationId: signin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v2/auth/user/signout:
+    post:
+      tags:
+        - Auth
+      summary: Выход из системы
+      operationId: signout
+      responses:
+        '200':
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  /api/v2/auth/token/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Обновление токена
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Токен обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  # ==================== BASES ====================
+  /api/v2/meta/bases:
+    get:
+      tags:
+        - Bases
+      summary: Получить список баз
+      operationId: baseList
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список баз
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /api/v2/meta/bases/{baseId}:
+    get:
+      tags:
+        - Bases
+      summary: Получить информацию о базе
+      operationId: baseGet
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о базе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Base'
+        '404':
+          description: База не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Bases
+      summary: Обновить базу
+      operationId: baseUpdate
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                color:
+                  type: string
+                meta:
+                  type: object
+      responses:
+        '200':
+          description: База обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Base'
+
+  /api/v2/meta/bases/{baseId}/info:
+    get:
+      tags:
+        - Bases
+      summary: Получить системную информацию о базе
+      operationId: baseInfoGet
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Системная информация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseInfo'
+
+  # ==================== TABLES ====================
+  /api/v2/meta/bases/{baseId}/tables:
+    get:
+      tags:
+        - Tables
+      summary: Получить список таблиц
+      operationId: tableList
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: includeM2M
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Список таблиц
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+    post:
+      tags:
+        - Tables
+      summary: Создать таблицу
+      operationId: tableCreate
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - table_name
+                - title
+              properties:
+                table_name:
+                  type: string
+                title:
+                  type: string
+                columns:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Таблица создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+
+  /api/v2/meta/bases/{baseId}/{sourceId}/tables:
+    get:
+      tags:
+        - Tables
+      summary: Получить список таблиц источника
+      operationId: tableListBySource
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: includeM2M
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Список таблиц
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+    post:
+      tags:
+        - Tables
+      summary: Создать таблицу в источнике
+      operationId: tableCreateInSource
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - table_name
+                - title
+              properties:
+                table_name:
+                  type: string
+                title:
+                  type: string
+                columns:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Таблица создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+
+  /api/v2/meta/tables/{tableId}:
+    get:
+      tags:
+        - Tables
+      summary: Получить информацию о таблице
+      operationId: tableGet
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о таблице
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+
+    patch:
+      tags:
+        - Tables
+      summary: Обновить таблицу
+      operationId: tableUpdate
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                table_name:
+                  type: string
+                meta:
+                  type: object
+      responses:
+        '200':
+          description: Таблица обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+
+  # ==================== COLUMNS ====================
+  /api/v2/meta/tables/{tableId}/columns:
+    post:
+      tags:
+        - Columns
+      summary: Добавить колонку
+      operationId: columnAdd
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - column_name
+                - title
+                - uidt
+              properties:
+                column_name:
+                  type: string
+                title:
+                  type: string
+                uidt:
+                  type: string
+                  description: UI Data Type
+                dt:
+                  type: string
+                  description: Database Type
+                pk:
+                  type: boolean
+                rqd:
+                  type: boolean
+                un:
+                  type: boolean
+                ai:
+                  type: boolean
+      responses:
+        '200':
+          description: Колонка добавлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+
+  /api/v2/meta/columns/{columnId}:
+    get:
+      tags:
+        - Columns
+      summary: Получить информацию о колонке
+      operationId: columnGet
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о колонке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+
+    patch:
+      tags:
+        - Columns
+      summary: Обновить колонку
+      operationId: columnUpdate
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                column_name:
+                  type: string
+                uidt:
+                  type: string
+      responses:
+        '200':
+          description: Колонка обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Column'
+
+    delete:
+      tags:
+        - Columns
+      summary: Удалить колонку
+      operationId: columnDelete
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Колонка удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  /api/v2/meta/columns/{columnId}/primary:
+    post:
+      tags:
+        - Columns
+      summary: Установить колонку как первичную
+      operationId: columnSetAsPrimary
+      parameters:
+        - name: columnId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Колонка установлена как первичная
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  # ==================== DATA ====================
+  /data/{viewId}:
+    get:
+      tags:
+        - Data
+      summary: Получить список данных по представлению
+      operationId: dataList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+        - name: where
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /data/{viewId}/{rowId}/mm/{colId}:
+    get:
+      tags:
+        - Data
+      summary: Получить связанные данные many-to-many
+      operationId: mmList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: rowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: colId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Связанные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /data/{viewId}/{rowId}/mm/{colId}/exclude:
+    get:
+      tags:
+        - Data
+      summary: Получить исключенные связанные данные many-to-many
+      operationId: mmExcludedList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: rowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: colId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Исключенные связанные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /data/{viewId}/{rowId}/hm/{colId}/exclude:
+    get:
+      tags:
+        - Data
+      summary: Получить исключенные связанные данные has-many
+      operationId: hmExcludedList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: rowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: colId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Исключенные связанные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /data/{viewId}/{rowId}/bt/{colId}/exclude:
+    get:
+      tags:
+        - Data
+      summary: Получить исключенные связанные данные belongs-to
+      operationId: btExcludedList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: rowId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: colId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Исключенные связанные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  # ==================== VIEWS ====================
+  /api/v2/meta/tables/{tableId}/views:
+    get:
+      tags:
+        - Views
+      summary: Получить список представлений
+      operationId: viewList
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список представлений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /api/v2/meta/views/{viewId}:
+    patch:
+      tags:
+        - Views
+      summary: Обновить представление
+      operationId: viewUpdate
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                show_system_fields:
+                  type: boolean
+                lock_type:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Представление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+    delete:
+      tags:
+        - Views
+      summary: Удалить представление
+      operationId: viewDelete
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Представление удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  # ==================== FILTERS ====================
+  /api/v2/meta/views/{viewId}/filters:
+    get:
+      tags:
+        - Filters
+      summary: Получить список фильтров
+      operationId: filterList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: includeAllFilters
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Список фильтров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+    post:
+      tags:
+        - Filters
+      summary: Создать фильтр
+      operationId: filterCreate
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fk_column_id:
+                  type: string
+                logical_op:
+                  type: string
+                  enum: [and, or]
+                comparison_op:
+                  type: string
+                value:
+                  type: string
+                is_group:
+                  type: boolean
+      responses:
+        '200':
+          description: Фильтр создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+
+  /api/v2/meta/filters/{filterId}:
+    get:
+      tags:
+        - Filters
+      summary: Получить информацию о фильтре
+      operationId: filterGet
+      parameters:
+        - name: filterId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о фильтре
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+
+  /api/v2/meta/hooks/{hookId}/filters:
+    post:
+      tags:
+        - Filters
+      summary: Создать фильтр для хука
+      operationId: hookFilterCreate
+      parameters:
+        - name: hookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fk_column_id:
+                  type: string
+                logical_op:
+                  type: string
+                comparison_op:
+                  type: string
+                value:
+                  type: string
+      responses:
+        '200':
+          description: Фильтр создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filter'
+
+  # ==================== SORTS ====================
+  /api/v2/meta/views/{viewId}/sorts:
+    get:
+      tags:
+        - Sorts
+      summary: Получить список сортировок
+      operationId: sortList
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список сортировок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+    post:
+      tags:
+        - Sorts
+      summary: Создать сортировку
+      operationId: sortCreate
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fk_column_id
+              properties:
+                fk_column_id:
+                  type: string
+                direction:
+                  type: string
+                  enum: [asc, desc]
+      responses:
+        '200':
+          description: Сортировка создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sort'
+
+  /api/v2/meta/sorts/{sortId}:
+    get:
+      tags:
+        - Sorts
+      summary: Получить информацию о сортировке
+      operationId: sortGet
+      parameters:
+        - name: sortId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о сортировке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sort'
+
+    patch:
+      tags:
+        - Sorts
+      summary: Обновить сортировку
+      operationId: sortUpdate
+      parameters:
+        - name: sortId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fk_column_id:
+                  type: string
+                direction:
+                  type: string
+                  enum: [asc, desc]
+      responses:
+        '200':
+          description: Сортировка обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sort'
+
+    delete:
+      tags:
+        - Sorts
+      summary: Удалить сортировку
+      operationId: sortDelete
+      parameters:
+        - name: sortId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Сортировка удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  # ==================== HOOKS ====================
+  /api/v2/meta/tables/{tableId}/hooks:
+    get:
+      tags:
+        - Hooks
+      summary: Получить список хуков
+      operationId: hookList
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список хуков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+    post:
+      tags:
+        - Hooks
+      summary: Создать хук
+      operationId: hookCreate
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - event
+                - operation
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                event:
+                  type: string
+                  enum: [after, before]
+                operation:
+                  type: string
+                  enum: [insert, update, delete]
+                type:
+                  type: string
+                url:
+                  type: string
+                headers:
+                  type: array
+                  items:
+                    type: object
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Хук создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hook'
+
+  /api/v2/meta/hooks/{hookId}:
+    patch:
+      tags:
+        - Hooks
+      summary: Обновить хук
+      operationId: hookUpdate
+      parameters:
+        - name: hookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                active:
+                  type: boolean
+                url:
+                  type: string
+      responses:
+        '200':
+          description: Хук обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hook'
+
+    delete:
+      tags:
+        - Hooks
+      summary: Удалить хук
+      operationId: hookDelete
+      parameters:
+        - name: hookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Хук удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  /api/v2/meta/tables/{tableId}/hooks/test:
+    post:
+      tags:
+        - Hooks
+      summary: Протестировать хук
+      operationId: hookTest
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payload:
+                  type: object
+                url:
+                  type: string
+      responses:
+        '200':
+          description: Результат теста
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ==================== USERS ====================
+  /api/v1/users:
+    get:
+      tags:
+        - Users
+      summary: Получить список пользователей организации
+      operationId: userList
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+    post:
+      tags:
+        - Users
+      summary: Добавить пользователя
+      operationId: userAdd
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                roles:
+                  type: string
+      responses:
+        '200':
+          description: Пользователь добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /api/v1/users/{userId}:
+    patch:
+      tags:
+        - Users
+      summary: Обновить пользователя
+      operationId: userUpdate
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                roles:
+                  type: string
+      responses:
+        '200':
+          description: Пользователь обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    delete:
+      tags:
+        - Users
+      summary: Удалить пользователя
+      operationId: userDelete
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  # ==================== BASE USERS ====================
+  /api/v2/meta/bases/{baseId}/users:
+    get:
+      tags:
+        - Base Users
+      summary: Получить список пользователей базы
+      operationId: baseUserList
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список пользователей базы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+
+    post:
+      tags:
+        - Base Users
+      summary: Пригласить пользователя в базу
+      operationId: userInvite
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                roles:
+                  type: string
+      responses:
+        '200':
+          description: Пользователь приглашен
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v2/meta/bases/{baseId}/users/{userId}:
+    patch:
+      tags:
+        - Base Users
+      summary: Обновить роль пользователя в базе
+      operationId: baseUserUpdate
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: string
+      responses:
+        '200':
+          description: Пользователь обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+
+  # ==================== SOURCES ====================
+  /api/v2/meta/bases/{baseId}/sources:
+    get:
+      tags:
+        - Sources
+      summary: Получить список источников данных
+      operationId: baseList
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список источников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse'
+
+  /api/v2/meta/bases/{baseId}/sources/{sourceId}:
+    get:
+      tags:
+        - Sources
+      summary: Получить информацию об источнике
+      operationId: sourceGet
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация об источнике
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+
+    patch:
+      tags:
+        - Sources
+      summary: Обновить источник
+      operationId: sourceUpdate
+      parameters:
+        - name: baseId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                alias:
+                  type: string
+                config:
+                  type: object
+      responses:
+        '200':
+          description: Источник обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+
+  # ==================== FORMS ====================
+  /api/v2/meta/forms/{formViewId}:
+    get:
+      tags:
+        - Forms
+      summary: Получить информацию о форме
+      operationId: formViewGet
+      parameters:
+        - name: formViewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о форме
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+    patch:
+      tags:
+        - Forms
+      summary: Обновить форму
+      operationId: formViewUpdate
+      parameters:
+        - name: formViewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                heading:
+                  type: string
+                subheading:
+                  type: string
+                success_msg:
+                  type: string
+                redirect_url:
+                  type: string
+      responses:
+        '200':
+          description: Форма обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  /api/v2/meta/tables/{tableId}/forms:
+    post:
+      tags:
+        - Forms
+      summary: Создать форму
+      operationId: formViewCreate
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                heading:
+                  type: string
+                subheading:
+                  type: string
+      responses:
+        '200':
+          description: Форма создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  # ==================== GRIDS ====================
+  /api/v2/meta/tables/{tableId}/grids:
+    post:
+      tags:
+        - Grids
+      summary: Создать grid представление
+      operationId: gridViewCreate
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+      responses:
+        '200':
+          description: Grid представление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  /api/v2/meta/grids/{viewId}:
+    patch:
+      tags:
+        - Grids
+      summary: Обновить grid представление
+      operationId: gridViewUpdate
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        '200':
+          description: Grid представление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  # ==================== GALLERIES ====================
+  /api/v2/meta/galleries/{galleryViewId}:
+    get:
+      tags:
+        - Galleries
+      summary: Получить информацию о gallery представлении
+      operationId: galleryViewGet
+      parameters:
+        - name: galleryViewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о gallery представлении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+    patch:
+      tags:
+        - Galleries
+      summary: Обновить gallery представление
+      operationId: galleryViewUpdate
+      parameters:
+        - name: galleryViewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                fk_cover_image_col_id:
+                  type: string
+      responses:
+        '200':
+          description: Gallery представление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  /api/v2/meta/tables/{tableId}/galleries:
+    post:
+      tags:
+        - Galleries
+      summary: Создать gallery представление
+      operationId: galleryViewCreate
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                fk_cover_image_col_id:
+                  type: string
+      responses:
+        '200':
+          description: Gallery представление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  # ==================== KANBANS ====================
+  /api/v2/meta/kanbans/{kanbanViewId}:
+    get:
+      tags:
+        - Kanbans
+      summary: Получить информацию о kanban представлении
+      operationId: kanbanViewGet
+      parameters:
+        - name: kanbanViewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о kanban представлении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+    patch:
+      tags:
+        - Kanbans
+      summary: Обновить kanban представление
+      operationId: kanbanViewUpdate
+      parameters:
+        - name: kanbanViewId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                fk_grp_col_id:
+                  type: string
+      responses:
+        '200':
+          description: Kanban представление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
+
+  /api/v2/meta/tables/{tableId}/kanbans:
+    post:
+      tags:
+        - Kanbans
+      summary: Создать kanban представление
+      operationId: kanbanViewCreate
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                fk_grp_col_id:
+                  type: string
+      responses:
+        '200':
+          description: Kanban представление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/View'
