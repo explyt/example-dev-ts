@@ -361,7 +361,7 @@ function baseModelSqlTests() {
     const bulkData = Array(10)
       .fill(0)
       .map((_, index) => generateDefaultRowAttributes({ columns, index }));
-    await baseModelSql.bulkInsert(bulkData, { cookie: request });
+    await baseModelSql.bulkInsert(bulkData);
 
     const idColumn = columns.find((column) => column.title === 'Id')!;
 
