@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { BaseVersion, MetaTable } from '~/utils/globals';
+import { MetaTable } from '~/utils/globals';
 
 const up = async (knex: Knex) => {
   const migrationStart = Date.now();
@@ -12,7 +12,7 @@ const up = async (knex: Knex) => {
     '[nc_092_composite_pk] Adding version column to PROJECT table...',
   );
   await knex.schema.alterTable(MetaTable.PROJECT, (t) => {
-    t.smallint('version').unsigned().defaultTo(BaseVersion.V2);
+    t.smallint('version').unsigned().defaultTo(2);
   });
   console.log(
     `[nc_092_composite_pk] Version column added in ${
@@ -23,7 +23,7 @@ const up = async (knex: Knex) => {
   const updateStart = Date.now();
   console.log('[nc_092_composite_pk] Updating existing projects to V2...');
   const updatedCount = await knex(MetaTable.PROJECT).update({
-    version: BaseVersion.V2,
+    version: 2,
   });
   console.log(
     `[nc_092_composite_pk] Updated ${updatedCount} projects to V2 in ${
