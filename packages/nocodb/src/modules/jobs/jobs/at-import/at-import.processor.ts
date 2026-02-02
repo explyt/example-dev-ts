@@ -319,7 +319,24 @@ export class AtImportProcessor {
 
       const file = ft.schema;
       atBaseId = ft.baseId;
-      atBase = new Airtable({ apiKey: sDB.apiKey }).base(atBaseId);
+
+      // Determine API credentials based on version
+      const apiVersion = sDB.apiVersion || 'v1';
+      const apiKey = apiVersion === 'v2' ? sDB.personalAccessToken : sDB.apiKey;
+
+      // Validate credentials
+      if (apiVersion === 'v1' && !sDB.apiKey) {
+        throw {
+          message: 'API Key is required for Airtable API v1',
+        };
+      }
+      if (apiVersion === 'v2' && !sDB.personalAccessToken) {
+        throw {
+          message: 'Personal Access Token is required for Airtable API v2',
+        };
+      }
+
+      atBase = new Airtable({ apiKey }).base(atBaseId);
       // store copy of airtable schema globally
       g_aTblSchema = file.tableSchemas;
 
@@ -2760,8 +2777,10 @@ export interface AirtableSyncConfig {
   baseId?: string;
   sourceId?: string;
   apiKey: string;
+  personalAccessToken?: string;
   appId?: string;
   shareId: string;
+  apiVersion?: string;
   user: Partial<UserType>;
   options: {
     syncViews: boolean;

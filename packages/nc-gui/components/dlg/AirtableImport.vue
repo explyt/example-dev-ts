@@ -58,9 +58,11 @@ const syncSource = ref({
     syncDirection: 'Airtable to NocoDB',
     syncRetryCount: 1,
     apiKey: '',
+    personalAccessToken: '',
     appId: '',
     shareId: '',
     syncSourceUrlOrId: '',
+    apiVersion: 'v1',
     options: {
       syncViews: true,
       syncData: true,
@@ -104,10 +106,20 @@ const onStatus = async (status: JobStatus, data?: any) => {
   }
 }
 
-const validators = computed(() => ({
-  'details.apiKey': [fieldRequiredValidator()],
-  'details.syncSourceUrlOrId': [fieldRequiredValidator()],
-}))
+const validators = computed(() => {
+  const rules: any = {
+    'details.syncSourceUrlOrId': [fieldRequiredValidator()],
+  }
+
+  // Validate credentials based on API version
+  if (syncSource.value.details.apiVersion === 'v2') {
+    rules['details.personalAccessToken'] = [fieldRequiredValidator()]
+  } else {
+    rules['details.apiKey'] = [fieldRequiredValidator()]
+  }
+
+  return rules
+})
 
 const dialogShow = computed({
   get: () => modelValue,
@@ -118,12 +130,14 @@ const useForm = Form.useForm
 
 const { validateInfos } = useForm(syncSource, validators)
 
-const disableImportButton = computed(
-  () =>
-    !syncSource.value.details.apiKey ||
-    !syncSource.value.details.syncSourceUrlOrId ||
-    sourceSelectorRef.value?.selectedSource?.ncItemDisabled,
-)
+const disableImportButton = computed(() => {
+  const hasCredentials =
+    syncSource.value.details.apiVersion === 'v2'
+      ? !!syncSource.value.details.personalAccessToken
+      : !!syncSource.value.details.apiKey
+
+  return !hasCredentials || !syncSource.value.details.syncSourceUrlOrId || sourceSelectorRef.value?.selectedSource?.ncItemDisabled
+})
 
 const isLoading = ref(false)
 
@@ -230,9 +244,11 @@ async function loadSyncSrc() {
         syncDirection: 'Airtable to NocoDB',
         syncRetryCount: 1,
         apiKey: '',
+        personalAccessToken: '',
         appId: '',
         shareId: '',
         syncSourceUrlOrId: '',
+        apiVersion: 'v1',
         options: {
           syncViews: true,
           syncData: true,
@@ -303,6 +319,18 @@ const isInProgress = computed(() => {
 
 const detailsIsShown = ref(false)
 const collapseKey = ref('')
+
+// Auto-detect API version based on credentials
+watch(
+  () => [syncSource.value.details.personalAccessToken, syncSource.value.details.apiKey],
+  ([pat, apiKey]) => {
+    if (pat && !apiKey) {
+      syncSource.value.details.apiVersion = 'v2'
+    } else if (apiKey && !pat) {
+      syncSource.value.details.apiVersion = 'v1'
+    }
+  },
+)
 </script>
 
 <template>
@@ -360,9 +388,43 @@ const collapseKey = ref('')
         layout="vertical"
         class="m-0 !text-nc-content-gray"
       >
-        <a-form-item v-bind="validateInfos['details.apiKey']" class="!my-5">
+        <!-- API Version Selector -->
+        <div class="!my-5">
+          <label class="text-nc-content-gray text-sm mb-2 block">API Version</label>
+          <a-radio-group v-model:value="syncSource.details.apiVersion" class="w-full">
+            <a-radio value="v1" class="!mr-4">v1 (Legacy)</a-radio>
+            <a-radio value="v2">v2 (Recommended)</a-radio>
+          </a-radio-group>
+        </div>
+
+        <!-- Credentials Input - v2 (Personal Access Token) -->
+        <a-form-item
+          v-if="syncSource.details.apiVersion === 'v2'"
+          v-bind="validateInfos['details.personalAccessToken']"
+          class="!my-5"
+        >
           <div class="flex items-end">
-            <label class="text-nc-content-gray text-sm"> {{ $t('labels.personalAccessToken') }} </label>
+            <label class="text-nc-content-gray text-sm">Personal Access Token</label>
+            <a href="https://airtable.com/create/tokens" class="!text-brand text-sm ml-auto" target="_blank" rel="noopener">
+              {{ $t('labels.whereToFind') }}
+            </a>
+          </div>
+
+          <a-input-password
+            v-model:value="syncSource.details.personalAccessToken"
+            placeholder="Enter your Airtable Personal Access Token"
+            class="!rounded-lg mt-2 nc-input-personal-access-token nc-input-shadow !text-nc-content-gray"
+          >
+            <template #iconRender="isVisible">
+              <GeneralIcon :icon="!isVisible ? 'ncEye' : 'ncEyeOff'" />
+            </template>
+          </a-input-password>
+        </a-form-item>
+
+        <!-- Credentials Input - v1 (API Key) -->
+        <a-form-item v-else v-bind="validateInfos['details.apiKey']" class="!my-5">
+          <div class="flex items-end">
+            <label class="text-nc-content-gray text-sm">API Key</label>
             <a
               href="https://nocodb.com/docs/product-docs/bases/import-base-from-airtable#get-airtable-credentials"
               class="!text-brand text-sm ml-auto"
@@ -375,7 +437,7 @@ const collapseKey = ref('')
 
           <a-input-password
             v-model:value="syncSource.details.apiKey"
-            placeholder="Enter your Airtable Personal Access Token"
+            placeholder="Enter your Airtable API Key"
             class="!rounded-lg mt-2 nc-input-api-key nc-input-shadow !text-nc-content-gray"
           >
             <template #iconRender="isVisible">

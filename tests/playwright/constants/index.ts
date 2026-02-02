@@ -7,8 +7,18 @@ const airtableApiBases = [
 const today = new Date();
 
 const airtableApiKey = 'pat23tPxwKmp4P96z.6b96f6381ad1bf2abdbd09539ac64fdb898516693603137b66e1e4e5a41bca78';
+const airtablePersonalAccessToken = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN || airtableApiKey;
 const airtableApiBase = airtableApiBases[today.getDate() % airtableApiBases.length];
+const airtableApiVersion = process.env.AIRTABLE_API_VERSION || 'v1';
+const airtableBaseUrl = 'https://api.airtable.com/v0';
 
 const defaultBaseName = 'Base';
 
-export { airtableApiKey, airtableApiBase, defaultBaseName };
+export {
+  airtableApiKey,
+  airtablePersonalAccessToken,
+  airtableApiBase,
+  airtableApiVersion,
+  airtableBaseUrl,
+  defaultBaseName,
+};

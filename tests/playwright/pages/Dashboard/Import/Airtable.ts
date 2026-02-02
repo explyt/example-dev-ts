@@ -16,12 +16,33 @@ export class ImportAirtablePage extends BasePage {
     return this.dashboard.get().locator(`.nc-modal-airtable-import`);
   }
 
-  async import({ key, sourceId }: { key: string; sourceId: string }) {
+  async import({
+    key,
+    sourceId,
+    apiVersion = 'v1',
+    personalAccessToken,
+  }: {
+    key?: string;
+    sourceId: string;
+    apiVersion?: string;
+    personalAccessToken?: string;
+  }) {
     // kludge: failing in headless mode
     // additional time to allow the modal to render completely
     await this.rootPage.waitForTimeout(1000);
 
-    await this.get().locator(`.nc-input-api-key >> input`).fill(key);
+    // Select API version if not v1
+    if (apiVersion === 'v2') {
+      await this.get().locator('input[type="radio"][value="v2"]').click();
+      await this.get()
+        .locator(`.nc-input-personal-access-token >> input`)
+        .fill(personalAccessToken || key || '');
+    } else {
+      await this.get()
+        .locator(`.nc-input-api-key >> input`)
+        .fill(key || '');
+    }
+
     await this.get().locator(`.nc-input-shared-base`).fill(sourceId);
     await this.importButton.click();
 
