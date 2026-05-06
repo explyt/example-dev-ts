@@ -13,7 +13,7 @@ export class ATImportEngine extends ATMockImportEngine {
   }
 
   async initialize({ appId, shareId }: { appId: string; shareId: string }) {
-    const url = `https://airtable.com/${appId ? `${appId}/` : ''}${shareId}`;
+    const url = `https://api.airtable.com/v1/${appId ? `${appId}/` : ''}${shareId}`;
     return await axios.get(url, {
       headers: {
         accept:
@@ -39,7 +39,7 @@ export class ATImportEngine extends ATMockImportEngine {
   }
 
   async read(info: { link: string; cookie: string; headers: any }) {
-    return await axios('https://airtable.com' + info.link, {
+    return await axios('https://api.airtable.com/v1' + info.link, {
       headers: {
         accept: '*/*',
         'accept-language': 'en-US,en;q=0.9',
